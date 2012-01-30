@@ -141,9 +141,9 @@ Sub-Commands:
         (script, re.sub('_', '-', namespace), namespaces[namespace].description, cmd_txt)
     
     args = filter(lambda x: not x.startswith('-'), sys.argv)
-    if len(args) > 2 and namespaces[namespace].commands.has_key(args[2]):
+    cmd_name = re.sub('-', '_', args[2])
+    if len(args) > 2 and namespaces[namespace].commands.has_key(cmd_name):
         # Show a command help-text
-        cmd_name = args[2]
         cmd = namespaces[namespace].commands[cmd_name]
         namespaces[namespace].options.usage = """   %s %s %s [ARGS] --(OPTIONS)
 
