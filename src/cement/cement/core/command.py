@@ -40,7 +40,7 @@ def run_command(cmd_name=None, ignore_conflicts=False):
     # Parse cli options and arguments
     (cli_opts, cli_args) = parse_options(namespace=namespace, 
                                          ignore_conflicts=ignore_conflicts)
-
+    
     # Run all post options hooks
     for res in run_hooks('post_options_hook', cli_opts, cli_args):
         pass # Doesn't expect a result

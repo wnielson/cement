@@ -28,7 +28,6 @@ def init_parser(banner=None):
             )
     parser = optparse.OptionParser(formatter=fmt, version=banner)
     return parser
-
     
 def parse_options(namespace='root', ignore_conflicts=False): 
     """
@@ -63,28 +62,25 @@ def parse_options(namespace='root', ignore_conflicts=False):
                     except optparse.OptionConflictError, error:
                         if not ignore_conflicts:
                             raise optparse.OptionConflictError, error
-    
-    cmd_txt = ''
-    line = '    '
+    commands_list = []
     if namespaces[namespace].commands:
         for cmd in namespaces[namespace].commands:    
             cmd_with_dashes = re.sub('_', '-', cmd)
-            if namespaces[namespace].commands[cmd]['is_hidden']:
+            cmd_dict = namespaces[namespace].commands[cmd]
+            if cmd_dict['is_hidden']:
                 pass
             else:
-                if line == '    ':
-                    line += '%s' % cmd_with_dashes
-                elif len(line) + len(cmd_with_dashes) < 75:
-                    line += ', %s' % cmd_with_dashes
-                else:
-                    cmd_txt += "%s \n" % line
-                    line = '    %s' % cmd_with_dashes
-    if line != '    ':
-        cmd_txt += "%s\n" % line
-        
+                commands_list.append((cmd_with_dashes, cmd_dict['desc'] or ""))
+    
+    cmd_txt = ""
+    if commands_list:
+        cmd_txt = "  %%-%ds %%s" % (max((len(c[0]) for c in commands_list))+2)
+        cmd_txt = "\n".join(cmd_txt % c for c in commands_list)
+    
     # Do the same thing, but with namespaces (if applicable to each namespace)
     nam_txt = ''
     line = '    '
+    namespaces_list = []
     script = os.path.basename(sys.argv[0])
     if namespace == 'root':
         for nam in namespaces: 
@@ -101,7 +97,8 @@ def parse_options(namespace='root', ignore_conflicts=False):
                             show_namespace = True
                             break
 
-                    if show_namespace:       
+                    if show_namespace:
+                        namespaces_list.append((nam_with_dashes, namespaces[nam].description or ""))
                         if line == '    ':
                             line += '%s' % nam_with_dashes
                         elif len(line) + len(nam_with_dashes) < 75:
@@ -109,36 +106,49 @@ def parse_options(namespace='root', ignore_conflicts=False):
                         else:
                             nam_txt += "%s \n" % line
                             line = '    %s' % nam_with_dashes
-                            
-        if line != '    ':
-            nam_txt += "%s\n" % line    
-    
-        if nam_txt == "":
+        
+        if namespaces_list:
+            nam_txt = "  %%-%ds %%s" % (max((len(n[0]) for n in namespaces_list))+2)
+            nam_txt = "\n".join(nam_txt % n for n in namespaces_list)
+        
+        if not nam_txt:
             namespaces[namespace].options.usage = """  %s <COMMAND> [ARGS] --(OPTIONS)
 
-Commands:  
+Commands:
 %s
-Help?  try '[COMMAND]-help' OR '[NAMESPACE] --help'""" % \
+Help?  try '[COMMAND] --help' OR '[NAMESPACE] --help'""" % \
             (script, cmd_txt)
 
         else:
             namespaces[namespace].options.usage = """  %s <COMMAND> [ARGS] --(OPTIONS)
 
-Commands:  
+Commands:
 %s
+
 Namespaces (Nested SubCommands):
 %s
-Help?  try '[COMMAND]-help' OR '[NAMESPACE] --help'""" % \
+
+Help?  try '[COMMAND] --help' OR '[NAMESPACE] --help'""" % \
         (script, cmd_txt, nam_txt)
                          
     else: # namespace not root
         namespaces[namespace].options.usage = """  %s %s <SUBCOMMAND> [ARGS] --(OPTIONS)
 
-Sub-Commands:  
 %s
-Help?  try '[SUBCOMMAND]-help'""" % \
-        (script, re.sub('_', '-', namespace), cmd_txt)
-        
+
+Sub-Commands:
+%s""" % \
+        (script, re.sub('_', '-', namespace), namespaces[namespace].description, cmd_txt)
+    
+    args = filter(lambda x: not x.startswith('-'), sys.argv)
+    if len(args) > 2 and namespaces[namespace].commands.has_key(args[2]):
+        # Show a command help-text
+        cmd_name = args[2]
+        cmd = namespaces[namespace].commands[cmd_name]
+        namespaces[namespace].options.usage = """   %s %s %s [ARGS] --(OPTIONS)
+
+%s
+""" % (script, re.sub('_', '-', namespace), cmd_name, cmd.get("desc", "") )
 
     (opts, args) = namespaces[namespace].options.parse_args()
     

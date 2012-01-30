@@ -154,6 +154,7 @@ class expose(object):
             'original_func' : func,
             'func' : self.name,
             'controller_namespace' : con_namespace,
+            'desc': self.desc
             }
 
         # Set the command info in the dest namespace
