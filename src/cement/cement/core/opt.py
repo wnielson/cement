@@ -148,7 +148,7 @@ Sub-Commands:
         namespaces[namespace].options.usage = """   %s %s %s [ARGS] --(OPTIONS)
 
 %s
-""" % (script, re.sub('_', '-', namespace), cmd_name, cmd.get("desc", "") )
+""" % (script, re.sub('_', '-', namespace), args[2], cmd.get("desc", "") )
 
     (opts, args) = namespaces[namespace].options.parse_args()
     
